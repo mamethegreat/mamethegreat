@@ -1,97 +1,45 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { AdminDashboard } from '@/components/admin/admin-dashboard'
+import { LoadingScreen } from '@/components/loading-screen'
 
-export default async function AdminPage() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    redirect('/admin/login')
+export default function AdminPage() {
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if admin is logged in
+    const adminAuth = localStorage.getItem('bingo_admin_auth')
+    const authTime = localStorage.getItem('bingo_admin_auth_time')
+    
+    if (adminAuth === 'true' && authTime) {
+      // Check if session is less than 24 hours old
+      const hoursSinceAuth = (Date.now() - parseInt(authTime)) / (1000 * 60 * 60)
+      if (hoursSinceAuth < 24) {
+        setIsAuthed(true)
+      } else {
+        // Session expired
+        localStorage.removeItem('bingo_admin_auth')
+        localStorage.removeItem('bingo_admin_auth_time')
+        router.push('/admin/login')
+      }
+    } else {
+      router.push('/admin/login')
+    }
+    
+    setIsLoading(false)
+  }, [router])
+
+  if (isLoading) {
+    return <LoadingScreen />
   }
 
-  // Verify admin access
-  const { data: admin } = await supabase
-    .from('admins')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .single()
-
-  if (!admin) {
-    redirect('/admin/login')
+  if (!isAuthed) {
+    return <LoadingScreen />
   }
 
-  // Get pending deposits
-  const { data: pendingDeposits } = await supabase
-    .from('transactions')
-    .select(`
-      *,
-      users(telegram_id, first_name, last_name, username)
-    `)
-    .eq('type', 'deposit')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-
-  // Get pending withdrawals
-  const { data: pendingWithdrawals } = await supabase
-    .from('transactions')
-    .select(`
-      *,
-      users(telegram_id, first_name, last_name, username, balance)
-    `)
-    .eq('type', 'withdrawal')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-
-  // Get current game
-  const { data: currentGame } = await supabase
-    .from('games')
-    .select('*')
-    .in('status', ['lobby', 'countdown', 'active'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-
-  // Get stats
-  const { count: totalUsers } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-
-  const { data: totalDeposits } = await supabase
-    .from('transactions')
-    .select('amount')
-    .eq('type', 'deposit')
-    .eq('status', 'approved')
-
-  const { data: totalWithdrawals } = await supabase
-    .from('transactions')
-    .select('amount')
-    .eq('type', 'withdrawal')
-    .eq('status', 'completed')
-
-  const { data: houseEarnings } = await supabase
-    .from('games')
-    .select('house_fee')
-    .eq('status', 'completed')
-
-  const stats = {
-    totalUsers: totalUsers || 0,
-    totalDeposits: totalDeposits?.reduce((sum, t) => sum + t.amount, 0) || 0,
-    totalWithdrawals: totalWithdrawals?.reduce((sum, t) => sum + t.amount, 0) || 0,
-    houseEarnings: houseEarnings?.reduce((sum, g) => sum + (g.house_fee || 0), 0) || 0,
-    pendingDepositsCount: pendingDeposits?.length || 0,
-    pendingWithdrawalsCount: pendingWithdrawals?.length || 0,
-  }
-
-  return (
-    <AdminDashboard
-      admin={admin}
-      pendingDeposits={pendingDeposits || []}
-      pendingWithdrawals={pendingWithdrawals || []}
-      currentGame={currentGame}
-      stats={stats}
-    />
-  )
+  return <AdminDashboard />
 }

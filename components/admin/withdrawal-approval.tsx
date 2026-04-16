@@ -23,10 +23,10 @@ interface Withdrawal {
 
 interface WithdrawalApprovalProps {
   withdrawals: Withdrawal[]
+  onRefresh?: () => void
 }
 
-export function WithdrawalApproval({ withdrawals }: WithdrawalApprovalProps) {
-  const router = useRouter()
+export function WithdrawalApproval({ withdrawals, onRefresh }: WithdrawalApprovalProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
 
   const handleAction = async (withdrawalId: string, action: 'complete' | 'reject') => {
@@ -44,7 +44,7 @@ export function WithdrawalApproval({ withdrawals }: WithdrawalApprovalProps) {
         throw new Error(data.error || 'Failed to process')
       }
 
-      router.refresh()
+      if (onRefresh) onRefresh()
     } catch (error) {
       console.error('Error processing withdrawal:', error)
       alert(error instanceof Error ? error.message : 'Failed to process')

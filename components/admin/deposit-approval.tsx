@@ -29,10 +29,10 @@ interface Deposit {
 
 interface DepositApprovalProps {
   deposits: Deposit[]
+  onRefresh?: () => void
 }
 
-export function DepositApproval({ deposits }: DepositApprovalProps) {
-  const router = useRouter()
+export function DepositApproval({ deposits, onRefresh }: DepositApprovalProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
@@ -51,7 +51,7 @@ export function DepositApproval({ deposits }: DepositApprovalProps) {
         throw new Error(data.error || 'Failed to process')
       }
 
-      router.refresh()
+      if (onRefresh) onRefresh()
     } catch (error) {
       console.error('Error processing deposit:', error)
       alert(error instanceof Error ? error.message : 'Failed to process')

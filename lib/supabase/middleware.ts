@@ -41,37 +41,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes (except login page)
-  if (
-    request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login') &&
-    !user
-  ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Verify admin user has admin role
-  if (
-    request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login') &&
-    user
-  ) {
-    // Check if user is admin in the database - use email for safer matching
-    const { data: admin } = await supabase
-      .from('admins')
-      .select('*')
-      .eq('email', user.email)
-      .eq('is_active', true)
-      .maybeSingle()
-
-    if (!admin) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      return NextResponse.redirect(url)
-    }
-  }
+  // Admin routes use simple password auth via localStorage (handled client-side)
+  // No server-side middleware checks needed for admin routes
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
