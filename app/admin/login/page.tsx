@@ -1,6 +1,5 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,91 +12,33 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Shield, CheckCircle } from 'lucide-react'
+import { Shield } from 'lucide-react'
+
+// Simple password - change this to your own secret password
+const ADMIN_PASSWORD = 'bingo2024admin'
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
-    setSuccess(null)
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      
-      if (error) throw error
-
-      // Verify user is an admin (admins table uses 'id' as the user_id)
-      const { data: admin, error: adminError } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('id', data.user.id)
-        .eq('is_active', true)
-        .single()
-
-      if (adminError || !admin) {
-        await supabase.auth.signOut()
-        throw new Error('You do not have admin access')
-      }
-
+    // Simple password check
+    if (password === ADMIN_PASSWORD) {
+      // Store admin session in localStorage
+      localStorage.setItem('bingo_admin_auth', 'true')
+      localStorage.setItem('bingo_admin_auth_time', Date.now().toString())
       router.push('/admin')
-      router.refresh()
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
-      setIsLoading(false)
+    } else {
+      setError('Wrong password')
     }
-  }
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      // Check if email is whitelisted
-      const { data: whitelist, error: whitelistError } = await supabase
-        .from('admin_whitelist')
-        .select('email')
-        .eq('email', email.toLowerCase())
-        .single()
-
-      if (whitelistError || !whitelist) {
-        throw new Error('This email is not authorized for admin access')
-      }
-
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? 
-            `${window.location.origin}/auth/callback`,
-        },
-      })
-      
-      if (error) throw error
-
-      setSuccess('Account created! Check your email for a confirmation link, then come back and sign in.')
-      setIsSignUp(false)
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
-      setIsLoading(false)
-    }
+    
+    setIsLoading(false)
   }
 
   return (
@@ -108,70 +49,32 @@ export default function AdminLoginPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Shield className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-2xl">
-              {isSignUp ? 'Admin Sign Up' : 'Admin Login'}
-            </CardTitle>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
             <CardDescription>
-              {isSignUp 
-                ? 'Create your admin account (whitelisted emails only)'
-                : 'Enter your credentials to access the admin panel'}
+              Enter the admin password to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
+            <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-secondary"
-                  />
-                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     required
-                    minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-secondary"
-                    placeholder={isSignUp ? 'Min 6 characters' : ''}
+                    placeholder="Enter admin password"
+                    autoFocus
                   />
                 </div>
                 {error && (
                   <p className="text-sm text-destructive text-center">{error}</p>
                 )}
-                {success && (
-                  <div className="flex items-center gap-2 text-sm text-green-500 justify-center">
-                    <CheckCircle className="h-4 w-4" />
-                    <p>{success}</p>
-                  </div>
-                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading 
-                    ? (isSignUp ? 'Creating account...' : 'Signing in...') 
-                    : (isSignUp ? 'Create Account' : 'Sign In')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp)
-                    setError(null)
-                    setSuccess(null)
-                  }}
-                >
-                  {isSignUp 
-                    ? 'Already have an account? Sign In' 
-                    : "Don't have an account? Sign Up"}
+                  {isLoading ? 'Checking...' : 'Enter Admin Panel'}
                 </Button>
               </div>
             </form>
