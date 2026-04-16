@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Bingo Game Theme - Dark Gaming Aesthetic */
+  --background: #0f0f1a;
+  --foreground: #ffffff;
+  --card: #1a1a2e;
+  --card-foreground: #ffffff;
+  --popover: #1a1a2e;
+  --popover-foreground: #ffffff;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #16213e;
+  --secondary-foreground: #a1a1aa;
+  --muted: #27273a;
+  --muted-foreground: #71717a;
+  --accent: #f59e0b;
+  --accent-foreground: #0f0f1a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #27273a;
+  --input: #27273a;
+  --ring: #6366f1;
+  --radius: 0.75rem;
+  
+  /* Game-specific colors */
+  --bingo-gold: #fbbf24;
+  --bingo-green: #22c55e;
+  --bingo-red: #ef4444;
+  --bingo-blue: #3b82f6;
+  --bingo-purple: #8b5cf6;
+}
+
+@theme inline {
+  --font-sans: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Game colors */
+  --color-bingo-gold: var(--bingo-gold);
+  --color-bingo-green: var(--bingo-green);
+  --color-bingo-red: var(--bingo-red);
+  --color-bingo-blue: var(--bingo-blue);
+  --color-bingo-purple: var(--bingo-purple);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  body {
+    @apply bg-background text-foreground min-h-screen;
+    overscroll-behavior: none;
+  }
+}
+
+/* Bingo card animations */
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+  }
+}
+
+@keyframes number-called {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s infinite;
+}
+
+.animate-number-called {
+  animation: number-called 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.4s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* Number ball styling */
+.bingo-ball {
+  @apply relative flex items-center justify-center rounded-full font-bold;
+  background: linear-gradient(135deg, var(--ball-color) 0%, var(--ball-color-dark) 100%);
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bingo-ball::before {
+  content: '';
+  @apply absolute top-1 left-1/2 w-1/3 h-1/4 rounded-full;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, transparent 100%);
+}
+
+/* Column colors */
+.ball-b { --ball-color: #3b82f6; --ball-color-dark: #1d4ed8; }
+.ball-i { --ball-color: #ef4444; --ball-color-dark: #b91c1c; }
+.ball-n { --ball-color: #f59e0b; --ball-color-dark: #b45309; }
+.ball-g { --ball-color: #22c55e; --ball-color-dark: #15803d; }
+.ball-o { --ball-color: #8b5cf6; --ball-color-dark: #6d28d9; }
+
+/* Card cell styling */
+.bingo-cell {
+  @apply relative flex items-center justify-center rounded-lg font-bold text-lg transition-all duration-200;
+  aspect-ratio: 1;
+}
+
+.bingo-cell.marked {
+  @apply bg-primary text-primary-foreground;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+}
+
+.bingo-cell.free {
+  @apply bg-accent text-accent-foreground;
+}
+
+.bingo-cell.winning {
+  background: var(--bingo-gold);
+  color: var(--background);
+  animation: pulse-gold 1s infinite;
+}
+
+/* Card selection grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+@media (max-width: 400px) {
+  .card-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
