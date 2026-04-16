@@ -58,13 +58,13 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/admin/login') &&
     user
   ) {
-    // Check if user is admin in the database (admins.id = auth user id)
+    // Check if user is admin in the database - use email for safer matching
     const { data: admin } = await supabase
       .from('admins')
-      .select('id')
-      .eq('id', user.id)
+      .select('*')
+      .eq('email', user.email)
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
 
     if (!admin) {
       const url = request.nextUrl.clone()

@@ -39,13 +39,13 @@ export default function AdminLoginPage() {
       
       if (error) throw error
 
-      // Verify user is an admin (admins table uses 'id' as the user_id)
+      // Verify user is an admin - use email for safer matching
       const { data: admin, error: adminError } = await supabase
         .from('admins')
-        .select('id')
-        .eq('id', data.user.id)
+        .select('*')
+        .eq('email', data.user.email)
         .eq('is_active', true)
-        .single()
+        .maybeSingle()
 
       if (adminError || !admin) {
         await supabase.auth.signOut()
